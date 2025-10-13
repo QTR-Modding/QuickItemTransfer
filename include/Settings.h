@@ -47,51 +47,9 @@ enum ItemTypes {
     kGems,
     kLeatherNPelts,
     kBuildingMaterials,
+    kMisc,
     kNone
 };
-
-inline const char* to_string(const ItemTypes e) {
-    switch (e) {
-        case kWeapon:
-            return "kWeapon";
-        case kAmmo:
-            return "kAmmo";
-        case kArmor:
-            return "kArmor";
-        case kPotion:
-            return "kPotion";
-        case kScrollItem:
-            return "kScrollItem";
-        case kRawFood:
-            return "kRawFood";
-        case kCookedFood:
-            return "kCookedFood";
-        case kSweets:
-            return "kSweets";
-        case kDrinks:
-            return "kDrinks";
-        case kIngredient:
-            return "kIngredient";
-        case kBook:
-            return "kBook";
-        case kKey:
-            return "kKey";
-        case kSoulGem:
-            return "kSoulGem";
-        case kOres:
-            return "kOres";
-        case kGems:
-            return "kGems";
-        case kLeatherNPelts:
-            return "kLeatherNPelts";
-        case kBuildingMaterials:
-            return "kBuildingMaterials";
-        case kNone:
-            return "kNone";
-        default:
-            return "unknown";
-    }
-}
 
 inline bool IsItemType(const ItemTypes a_itemtype) {
 	return a_itemtype >= kWeapon && a_itemtype < kNone;
@@ -136,6 +94,8 @@ inline std::function<bool(RE::TESBoundObject*)> GetFilterFunc(const ItemTypes a_
 		return [](const RE::TESBoundObject* a_obj) { return IsLeatherNPelts(a_obj->GetFormID()); };
 	case kBuildingMaterials:
 		return [](const RE::TESBoundObject* a_obj) { return IsBuildingMaterials(a_obj->GetFormID()); };
+	case kMisc:
+        return [](const RE::TESBoundObject* a_obj) {return a_obj->Is(RE::FormType::Misc) || a_obj->Is(RE::FormType::Light); };
 	default:
 		return [](RE::TESBoundObject*) { return false; };
 	}
