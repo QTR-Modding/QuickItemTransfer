@@ -95,7 +95,7 @@ inline std::function<bool(RE::TESBoundObject*)> GetFilterFunc(const ItemTypes a_
 	case kBuildingMaterials:
 		return [](const RE::TESBoundObject* a_obj) { return IsBuildingMaterials(a_obj->GetFormID()); };
 	case kMisc:
-        return [](const RE::TESBoundObject* a_obj) {return a_obj->Is(RE::FormType::Misc); };
+        return [](const RE::TESBoundObject* a_obj) {return a_obj->Is(RE::FormType::Misc) || a_obj->Is(RE::FormType::Light); };
 	default:
 		return [](RE::TESBoundObject*) { return false; };
 	}
