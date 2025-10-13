@@ -26,6 +26,7 @@ void Utils::TransferItemsOfType(RE::TESObjectREFR* akSource, RE::TESObjectREFR* 
 
     for (const auto akSource_inv = akSource->GetInventory();
          auto& [item,data] : akSource_inv) {
+        if (data.first <= 0) continue;
         if (!filter_func(item)) {
             continue;
         }
