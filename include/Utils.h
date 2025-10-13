@@ -4,9 +4,9 @@
 namespace Utils {
     RE::TESObjectREFR* GetMenuContainer();
 
-    void TransferItemsOfType(RE::TESObjectREFR* akSource, RE::TESObjectREFR* akTarget, const ItemTypes item_type);
+    void TransferItemsOfType(RE::TESObjectREFR* akSource, RE::TESObjectREFR* akTarget, ItemTypes item_type);
 
-    void StartTransfer(RE::StaticFunctionTag*, const int iAction, const int iSubType = 0);
+    void StartTransfer(RE::StaticFunctionTag*, int iAction, int iSubType = 0);
 
     bool PapyrusFunctions(RE::BSScript::IVirtualMachine* vm);
 
