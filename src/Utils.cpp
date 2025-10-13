@@ -65,6 +65,7 @@ void Utils::StartTransfer(RE::StaticFunctionTag*, const int iAction, const int i
         TransferItemsOfType(akSource, akTarget, kScrollItem); // kScrollItem
     }
     else if (iAction == 5 || iAction == 16) { // Food Items, same as Potion form
+        if (iSubType == 0) TransferItemsOfType(akSource, akTarget, kFood);
         if (iSubType == 1) TransferItemsOfType(akSource, akTarget, kRawFood);
         else if (iSubType == 2) TransferItemsOfType(akSource, akTarget, kCookedFood);
         else if (iSubType == 3) TransferItemsOfType(akSource, akTarget, kDrinks);

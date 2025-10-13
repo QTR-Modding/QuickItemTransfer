@@ -35,6 +35,7 @@ enum ItemTypes {
     kArmor,
     kPotion,
     kScrollItem,
+    kFood,
     kRawFood,
     kCookedFood,
     kSweets,
@@ -42,12 +43,12 @@ enum ItemTypes {
     kIngredient,
     kBook,
     kKey,
+    kMisc,
     kSoulGem,
     kOres,
     kGems,
     kLeatherNPelts,
     kBuildingMaterials,
-    kMisc,
     kNone
 };
 
@@ -70,6 +71,8 @@ inline std::function<bool(RE::TESBoundObject*)> GetFilterFunc(const ItemTypes a_
 		};
 	case kScrollItem:
 		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Scroll); };
+	case kFood:
+		return [](const RE::TESBoundObject* a_obj) { const auto alch_item = a_obj->As<RE::AlchemyItem>(); return alch_item && alch_item->IsFood(); };
 	case kRawFood:
 		return [](const RE::TESBoundObject* a_obj) { return IsRawFood(a_obj->GetFormID()); };
 	case kCookedFood:
@@ -84,6 +87,8 @@ inline std::function<bool(RE::TESBoundObject*)> GetFilterFunc(const ItemTypes a_
 		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Book); };
 	case kKey:
 		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::KeyMaster); };
+	case kMisc:
+        return [](const RE::TESBoundObject* a_obj) {return a_obj->Is(RE::FormType::Misc) || a_obj->Is(RE::FormType::Light); };
 	case kSoulGem:
 		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::SoulGem); };
 	case kOres:
@@ -94,8 +99,6 @@ inline std::function<bool(RE::TESBoundObject*)> GetFilterFunc(const ItemTypes a_
 		return [](const RE::TESBoundObject* a_obj) { return IsLeatherNPelts(a_obj->GetFormID()); };
 	case kBuildingMaterials:
 		return [](const RE::TESBoundObject* a_obj) { return IsBuildingMaterials(a_obj->GetFormID()); };
-	case kMisc:
-        return [](const RE::TESBoundObject* a_obj) {return a_obj->Is(RE::FormType::Misc) || a_obj->Is(RE::FormType::Light); };
 	default:
 		return [](RE::TESBoundObject*) { return false; };
 	}
