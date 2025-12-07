@@ -18,22 +18,22 @@ QuickItemTransfer has migrated from ESP-based form list loading to a TXT-based c
 
 ## Configuration Location
 
-All TXT configuration files are located in:
+All TXT configuration files are located in category-specific folders under:
 ```
-Data/SKSE/Plugins/QuickItemTransfer/
+Data/SKSE/Plugins/QuickItemTransfer/<category>/
 ```
 
-## File Structure
+## Folder Structure
 
-Each category has its own TXT file:
-- `raw_food.txt` - Raw food items
-- `cooked_food.txt` - Cooked food items
-- `sweets.txt` - Sweet items
-- `drinks.txt` - Beverages
-- `ores.txt` - Ores and ingots
-- `gems.txt` - Gems and precious stones
-- `leather_and_pelts.txt` - Leather and animal pelts
-- `building_materials.txt` - Building materials
+Each category has its own dedicated folder containing TXT files:
+- `raw_food/` - Raw food items
+- `cooked_food/` - Cooked food items
+- `sweets/` - Sweet items
+- `drinks/` - Beverages
+- `ores/` - Ores and ingots
+- `gems/` - Gems and precious stones
+- `leather_and_pelts/` - Leather and animal pelts
+- `building_materials/` - Building materials
 
 ## FormID Format
 
@@ -64,9 +64,31 @@ IngotIron
 - Empty lines are ignored
 - Leading and trailing whitespace is automatically trimmed
 
+## Example Structure
+
+```
+Data/SKSE/Plugins/QuickItemTransfer/
+├── raw_food/
+│   └── raw_food.txt
+├── cooked_food/
+│   └── cooked_food.txt
+├── sweets/
+│   └── sweets.txt
+├── drinks/
+│   └── drinks.txt
+├── ores/
+│   └── ores.txt
+├── gems/
+│   └── gems.txt
+├── leather_and_pelts/
+│   └── leather_and_pelts.txt
+└── building_materials/
+    └── building_materials.txt
+```
+
 Example:
 ```
-# Raw Food Items for QuickItemTransfer
+# Raw Food Items for QuickItemTransfer (in raw_food/raw_food.txt)
 
 # Vanilla Skyrim meats
 FoodRabbitMeat
@@ -85,8 +107,9 @@ If you were using the old ESP-based system:
 2. Open it in xEdit or Creation Kit
 3. Export the FormLists to text format
 4. Convert to the new TXT file format
-5. Place files in `Data/SKSE/Plugins/QuickItemTransfer/`
-6. Remove or disable the ESP file
+5. Create category folders under `Data/SKSE/Plugins/QuickItemTransfer/`
+6. Place each TXT file in its corresponding category folder
+7. Remove or disable the ESP file
 
 ## Performance
 
@@ -114,10 +137,10 @@ Common mistakes:
 ## Advanced Usage
 
 ### Custom Categories
-To create custom item lists, simply edit the appropriate TXT file with your preferred text editor. Changes take effect after restarting the game.
+To create custom item lists, simply edit the appropriate TXT file in its category folder with your preferred text editor. Changes take effect after restarting the game.
 
 ### Sharing Configurations
-TXT files can be easily shared with other users or included in mod packages. Just distribute the files with clear instructions on where to place them.
+TXT files and their folder structure can be easily shared with other users or included in mod packages. Just distribute the category folders with clear instructions on where to place them.
 
 ### Version Control
 TXT files work great with version control systems like Git, making it easy to track changes and collaborate on item categorizations.

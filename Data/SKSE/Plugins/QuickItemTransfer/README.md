@@ -1,10 +1,23 @@
 # QuickItemTransfer Configuration Files
 
-This directory contains TXT configuration files that define which items belong to each category.
+This directory contains TXT configuration files organized into category-specific folders.
+
+## Folder Structure
+
+Each category has its own dedicated folder:
+
+- `raw_food/` - Raw food items
+- `cooked_food/` - Cooked food items
+- `sweets/` - Sweet food items
+- `drinks/` - Drink items
+- `ores/` - Ore and ingot items
+- `gems/` - Gem items
+- `leather_and_pelts/` - Leather and pelt items
+- `building_materials/` - Building materials
 
 ## File Format
 
-Each TXT file should contain one FormID per line. Supported formats:
+Each folder contains a TXT file (typically named after the category). Each TXT file should contain one FormID per line. Supported formats:
 
 1. **Editor ID** (recommended for base game items):
    ```
@@ -29,16 +42,27 @@ Each TXT file should contain one FormID per line. Supported formats:
 Lines starting with `#` or `;` are treated as comments and ignored.
 Empty lines are also ignored.
 
-## Configuration Files
+## Example Structure
 
-- `raw_food.txt` - Raw food items (e.g., raw meat, fish)
-- `cooked_food.txt` - Cooked food items (e.g., cooked beef, grilled leeks)
-- `sweets.txt` - Sweet food items (e.g., sweetrolls, honeycomb)
-- `drinks.txt` - Drink items (e.g., wine, ale, mead)
-- `ores.txt` - Ore and ingot items
-- `gems.txt` - Gem items
-- `leather_and_pelts.txt` - Leather and pelt items
-- `building_materials.txt` - Building materials (e.g., clay, stone)
+```
+Data/SKSE/Plugins/QuickItemTransfer/
+├── raw_food/
+│   └── raw_food.txt
+├── cooked_food/
+│   └── cooked_food.txt
+├── sweets/
+│   └── sweets.txt
+├── drinks/
+│   └── drinks.txt
+├── ores/
+│   └── ores.txt
+├── gems/
+│   └── gems.txt
+├── leather_and_pelts/
+│   └── leather_and_pelts.txt
+└── building_materials/
+    └── building_materials.txt
+```
 
 ## Performance
 
@@ -49,3 +73,4 @@ All files are loaded in parallel during plugin initialization for optimal perfor
 - The example files contain placeholder entries. Replace them with actual FormIDs for your setup.
 - If a file is missing, the corresponding category will be empty (no error).
 - Invalid FormID entries will be logged as warnings but won't prevent loading.
+- Each category folder can contain additional TXT files if needed for organization.

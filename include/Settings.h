@@ -1,18 +1,18 @@
 #pragma once
 
 // FormLists: TXT-based settings loading
-// All form lists are now loaded from TXT files located in:
-//   Data/SKSE/Plugins/QuickItemTransfer/
+// All form lists are now loaded from TXT files located in category-specific folders:
+//   Data/SKSE/Plugins/QuickItemTransfer/<category>/
 // 
-// Expected TXT files (one per set):
-//   - raw_food.txt              -> all_raw_food
-//   - cooked_food.txt           -> all_cooked_food
-//   - sweets.txt                -> all_sweets
-//   - drinks.txt                -> all_drinks
-//   - ores.txt                  -> all_ores
-//   - gems.txt                  -> all_gems
-//   - leather_and_pelts.txt     -> all_leather_n_pelts
-//   - building_materials.txt    -> all_building_materials
+// Expected folder and file structure:
+//   - raw_food/raw_food.txt              -> all_raw_food
+//   - cooked_food/cooked_food.txt        -> all_cooked_food
+//   - sweets/sweets.txt                  -> all_sweets
+//   - drinks/drinks.txt                  -> all_drinks
+//   - ores/ores.txt                      -> all_ores
+//   - gems/gems.txt                      -> all_gems
+//   - leather_and_pelts/leather_and_pelts.txt     -> all_leather_n_pelts
+//   - building_materials/building_materials.txt   -> all_building_materials
 //
 // Each TXT file should contain one FormID per line in one of these formats:
 //   - Editor ID (e.g., "BearPelt")

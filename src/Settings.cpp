@@ -83,22 +83,23 @@ void FormLists::GetAllFormLists() {
     // Create the base directory if it doesn't exist
     std::filesystem::create_directories(TXT_BASE_FOLDER);
     
-    // Define the file mappings (filename -> target set pointer)
-    // Using pointers to avoid reference lifetime issues with async
+    // Define the file mappings (category folder -> filename -> target set pointer)
+    // Each category now has its own dedicated folder
     struct FileSetMapping {
+        std::string category_folder;
         std::string filename;
         std::set<FormID>* target_set;
     };
     
     std::vector<FileSetMapping> mappings = {
-        {"raw_food.txt", &all_raw_food},
-        {"cooked_food.txt", &all_cooked_food},
-        {"sweets.txt", &all_sweets},
-        {"drinks.txt", &all_drinks},
-        {"ores.txt", &all_ores},
-        {"gems.txt", &all_gems},
-        {"leather_and_pelts.txt", &all_leather_n_pelts},
-        {"building_materials.txt", &all_building_materials}
+        {"raw_food", "raw_food.txt", &all_raw_food},
+        {"cooked_food", "cooked_food.txt", &all_cooked_food},
+        {"sweets", "sweets.txt", &all_sweets},
+        {"drinks", "drinks.txt", &all_drinks},
+        {"ores", "ores.txt", &all_ores},
+        {"gems", "gems.txt", &all_gems},
+        {"leather_and_pelts", "leather_and_pelts.txt", &all_leather_n_pelts},
+        {"building_materials", "building_materials.txt", &all_building_materials}
     };
     
     // Load files in parallel using std::async
@@ -107,7 +108,8 @@ void FormLists::GetAllFormLists() {
     
     for (const auto& mapping : mappings) {
         // Use std::filesystem::path for cross-platform path handling
-        std::filesystem::path filepath = std::filesystem::path(TXT_BASE_FOLDER) / mapping.filename;
+        // Structure: Data/SKSE/Plugins/QuickItemTransfer/<category>/<filename>
+        std::filesystem::path filepath = std::filesystem::path(TXT_BASE_FOLDER) / mapping.category_folder / mapping.filename;
         std::set<FormID>* target_ptr = mapping.target_set;
         
         // Launch async task for each file
