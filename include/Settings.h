@@ -1,5 +1,29 @@
 #pragma once
 
+// FormLists: TXT-based settings loading
+// All form lists are now loaded from TXT files located in:
+//   Data/SKSE/Plugins/QuickItemTransfer/
+// 
+// Expected TXT files (one per set):
+//   - raw_food.txt              -> all_raw_food
+//   - cooked_food.txt           -> all_cooked_food
+//   - sweets.txt                -> all_sweets
+//   - drinks.txt                -> all_drinks
+//   - ores.txt                  -> all_ores
+//   - gems.txt                  -> all_gems
+//   - leather_and_pelts.txt     -> all_leather_n_pelts
+//   - building_materials.txt    -> all_building_materials
+//
+// Each TXT file should contain one FormID per line in one of these formats:
+//   - Editor ID (e.g., "BearPelt")
+//   - Plugin~FormID (e.g., "0x12345~Skyrim.esm")
+//   - Hex FormID (e.g., "0x00012345")
+//
+// Lines starting with # or ; are treated as comments and ignored.
+// Empty lines are also ignored.
+//
+// Loading is performed in parallel for better startup performance.
+
 namespace FormLists {
     inline std::set<FormID> all_raw_food;
     inline std::set<FormID> all_cooked_food;
@@ -10,16 +34,11 @@ namespace FormLists {
     inline std::set<FormID> all_leather_n_pelts;
     inline std::set<FormID> all_building_materials;
 
+    // Main entry point: loads all form lists from TXT files (multithreaded)
     void GetAllFormLists();
+    
+    // Legacy function kept for API compatibility (deprecated)
     void GetFormList(RE::FormID a_localid, std::set<FormID>& a_formset);
-    inline void GetAllGems() { GetFormList(0x1, all_gems); }
-    inline void GetAllOres() { GetFormList(0x2, all_ores); }
-    inline void GetAllRawFood(){GetFormList(0x3, all_raw_food);}
-    inline void GetAllCookedFood() { GetFormList(0x4, all_cooked_food); }
-    inline void GetAllDrinks() { GetFormList(0x5, all_drinks); }
-    inline void GetAllSweets() { GetFormList(0x801, all_sweets); }
-    inline void GetAllLeatherNPelts() { GetFormList(0x802, all_leather_n_pelts); }
-    inline void GetAllBuildingMaterials() { GetFormList(0x803, all_building_materials); }
 
     inline bool IsRawFood(const FormID a_formid) { return all_raw_food.contains(a_formid); }
     inline bool IsCookedFood(const FormID a_formid) { return all_cooked_food.contains(a_formid); }

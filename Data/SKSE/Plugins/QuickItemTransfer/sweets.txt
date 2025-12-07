@@ -1,0 +1,10 @@
+# Sweet Food Items
+# Each line should contain a FormID in one of these formats:
+#   - Editor ID (e.g., "BearPelt")
+#   - Plugin~FormID (e.g., "0x12345~Skyrim.esm")
+#   - Hex FormID (e.g., "0x00012345")
+# Lines starting with # or ; are comments
+
+# Example entries (these are placeholders - replace with actual FormIDs):
+# 0x0006474D~Skyrim.esm
+# FoodSweetroll
