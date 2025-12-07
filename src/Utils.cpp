@@ -62,7 +62,8 @@ void Utils::StartTransfer(RE::StaticFunctionTag*, const int iAction, const int i
         TransferItemsOfType(akSource, akTarget, kArmor); // kArmor
     }
     else if (iAction == 3 || iAction == 14) {
-        TransferItemsOfType(akSource, akTarget, kPotion); // kPotion
+        if (iSubType == 0) TransferItemsOfType(akSource, akTarget, kPotion);  // kPotion
+        if (iSubType == 1) TransferItemsOfType(akSource, akTarget, kPoison);  // kPoison
     }
     else if (iAction == 4 || iAction == 15) {
         TransferItemsOfType(akSource, akTarget, kScrollItem); // kScrollItem

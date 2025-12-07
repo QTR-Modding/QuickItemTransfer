@@ -1,20 +1,18 @@
 #include "Settings.h"
 #include "CLibUtilsQTR/FormReader.hpp"
 
-void GetAllFormLists()
-{
-	GetAllRawFood();
-	GetAllCookedFood();
-	GetAllSweets();
-	GetAllDrinks();
-	GetAllOres();
-	GetAllGems();
-	GetAllLeatherNPelts();
-	GetAllBuildingMaterials();
+void FormLists::GetAllFormLists() {
+    GetAllRawFood();
+    GetAllCookedFood();
+    GetAllSweets();
+    GetAllDrinks();
+    GetAllOres();
+    GetAllGems();
+    GetAllLeatherNPelts();
+    GetAllBuildingMaterials();
 }
 
-void GetFormList(const RE::FormID a_localid, std::set<FormID>& a_formset)
-{
+void FormLists::GetFormList(const RE::FormID a_localid, std::set<FormID>& a_formset) {
 	const auto formid = FormReader::GetForm("Quick Item Transfer.esp", a_localid);
 	const auto formlist = RE::TESForm::LookupByID<RE::BGSListForm>(formid);
 	if (!formlist) {
