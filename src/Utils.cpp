@@ -20,6 +20,17 @@ void Utils::TransferItemsOfType(RE::TESObjectREFR* akSource, RE::TESObjectREFR* 
     if (!akSource || !akTarget) return;
     if (!IsItemType(item_type)) return;
 
+    float remaining_capacity = FLT_MAX;
+    if (!akTarget->IsPlayerRef()) {
+        if (const auto a_actor = akTarget->As<RE::Actor>()) {
+            if (const auto actor_val_owner = a_actor->AsActorValueOwner()) {
+                const auto total_capacity = actor_val_owner->GetActorValue(RE::ActorValue::kCarryWeight);
+                const auto current_weight = actor_val_owner->GetActorValue(RE::ActorValue::kInventoryWeight);
+                remaining_capacity = total_capacity - current_weight;
+            }
+        }
+    }
+
     const bool bExcludeSpecials = akSource->IsPlayerRef();
     const auto filter_func = GetFilterFunc(item_type);
     std::vector<std::pair<RE::TESBoundObject*, std::int32_t>> forms;
@@ -38,7 +49,9 @@ void Utils::TransferItemsOfType(RE::TESObjectREFR* akSource, RE::TESObjectREFR* 
     }
 
     for (const auto& [item, count] : forms) {
+        if (remaining_capacity <= 0.0f) break;
         akSource->RemoveItem(item, count, RE::ITEM_REMOVE_REASON::kRemove,nullptr, akTarget);
+        remaining_capacity -= item->GetWeight() * count;
     }
 
     SKSE::GetTaskInterface()->AddUITask([akTarget, akSource]() {
@@ -54,44 +67,58 @@ void Utils::StartTransfer(RE::StaticFunctionTag*, const int iAction, const int i
     RE::TESObjectREFR* akSource = bIsTaking ? container : player_ref;
     RE::TESObjectREFR* akTarget = bIsTaking ? player_ref : container;
 
+    auto type = kNone;
     if (iAction == 1 || iAction == 12) {
-        TransferItemsOfType(akSource, akTarget, kWeapon); // kWeapon
-        TransferItemsOfType(akSource, akTarget, kAmmo); // kAmmo
+        if (iSubType == 0) type = kWeapon;
+        else type = kAmmo;
     }
     else if (iAction == 2 || iAction == 13) {
-        TransferItemsOfType(akSource, akTarget, kArmor); // kArmor
+        switch (iSubType) {
+            case 1: type = kJewelry; break;
+            case 2: type = kShield; break;
+            case 3: type = kClothing; break;
+            default: type = kArmorStrict; break;
+        }
     }
     else if (iAction == 3 || iAction == 14) {
-        if (iSubType == 0) TransferItemsOfType(akSource, akTarget, kPotion);  // kPotion
-        if (iSubType == 1) TransferItemsOfType(akSource, akTarget, kPoison);  // kPoison
+        switch (iSubType) {
+            case 1:type = kPoison; break;
+            default:type = kPotion; break;
+        }
     }
     else if (iAction == 4 || iAction == 15) {
-        TransferItemsOfType(akSource, akTarget, kScrollItem); // kScrollItem
+        type = kScrollItem;
     }
-    else if (iAction == 5 || iAction == 16) { // Food Items, same as Potion form
-        if (iSubType == 0) TransferItemsOfType(akSource, akTarget, kFood);
-        if (iSubType == 1) TransferItemsOfType(akSource, akTarget, kRawFood);
-        else if (iSubType == 2) TransferItemsOfType(akSource, akTarget, kCookedFood);
-        else if (iSubType == 3) TransferItemsOfType(akSource, akTarget, kDrinks);
-        else if (iSubType == 4) TransferItemsOfType(akSource, akTarget, kSweets);
+    else if (iAction == 5 || iAction == 16) {
+        switch (iSubType) {
+            case 1: type = kRawFood; break;
+            case 2: type = kCookedFood; break;
+            case 3: type = kDrinks; break;
+            case 4: type = kSweets; break;
+            default: type = kFood; break;
+        }
     }
     else if (iAction == 6 || iAction == 17) {
-        TransferItemsOfType(akSource, akTarget, kIngredient); // kIngredient
+        type = kIngredient;
     }
     else if (iAction == 7 || iAction == 18) {
-        TransferItemsOfType(akSource, akTarget, kBook); // kBook
+        type = kBook;
     }
     else if (iAction == 8 || iAction == 19) {
-        TransferItemsOfType(akSource, akTarget, kKey); // kKey
+        type = kKey;
     }
     else if (iAction == 9 || iAction == 20) { // Misc Items
-        if (iSubType == 0) TransferItemsOfType(akSource, akTarget, kMisc);
-        else if (iSubType == 1) TransferItemsOfType(akSource, akTarget, kSoulGem);
-        else if (iSubType == 2) TransferItemsOfType(akSource, akTarget, kOres);
-        else if (iSubType == 3) TransferItemsOfType(akSource, akTarget, kGems);
-        else if (iSubType == 4) TransferItemsOfType(akSource, akTarget, kLeatherNPelts);
-        else if (iSubType == 5) TransferItemsOfType(akSource, akTarget, kBuildingMaterials);
+        switch (iSubType) {
+            case 1: type = kSoulGem; break;
+            case 2: type = kOres; break;
+            case 3: type = kGems; break;
+            case 4: type = kLeatherNPelts; break;
+            case 5: type = kBuildingMaterials; break;
+            default: type = kMiscAll; break;
+        }
     }
+
+    TransferItemsOfType(akSource, akTarget, type);
 }
 
 bool Utils::PapyrusFunctions(RE::BSScript::IVirtualMachine* vm) {

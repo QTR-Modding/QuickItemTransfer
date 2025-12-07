@@ -5,6 +5,7 @@ namespace {
     void OnMessage(SKSE::MessagingInterface::Message* a_message) {
 	    if (a_message->type == SKSE::MessagingInterface::kDataLoaded) {
             FormLists::GetAllFormLists();
+            FormLists::LoadKeywords();
 	        SKSE::GetPapyrusInterface()->Register(Utils::PapyrusFunctions);
 	    }
     }
