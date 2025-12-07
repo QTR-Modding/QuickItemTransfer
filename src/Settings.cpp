@@ -6,9 +6,9 @@
 
 namespace {
     constexpr auto TXT_BASE_FOLDER = "Data/SKSE/Plugins/QuickItemTransfer";
-    
+
     std::mutex g_loadingMutex;
-    
+
     std::string trim(const std::string& str) {
         const auto start = std::ranges::find_if(str, [](const unsigned char ch) {
             return !std::isspace(ch);
@@ -18,29 +18,29 @@ namespace {
         }).base();
         return (start < end) ? std::string(start, end) : std::string();
     }
-    
+
     // Helper function to load FormIDs from a TXT file into a set
     void LoadFormIDsFromFile(const std::filesystem::path& filepath, std::unordered_set<FormID>& target_set) {
         if (!std::filesystem::exists(filepath)) {
             logger::warn("TXT file not found: {}", filepath.string());
             return;
         }
-        
+
         std::ifstream file(filepath);
         if (!file.is_open()) {
             logger::error("Failed to open TXT file: {}", filepath.string());
             return;
         }
-        
+
         std::set<FormID> local_set;
         std::string line;
         int line_number = 0;
-        
+
         while (std::getline(file, line)) {
             line_number++;
-            
+
             line = trim(line);
-            
+
             if (line.empty() || line[0] == '#' || line[0] == ';') {
                 continue;
             }
@@ -52,7 +52,7 @@ namespace {
                 logger::warn("Invalid FormID at line {} in file {}: {}", line_number, filepath.string(), line);
             }
         }
-        
+
         if (!local_set.empty()) {
             std::lock_guard lock(g_loadingMutex);
             target_set.insert(local_set.begin(), local_set.end());
@@ -155,7 +155,9 @@ void FormLists::LoadKeywords() {
     vendorItemKeywords[3] = RE::TESForm::LookupByID<RE::BGSKeyword>(0xA0E56);
     vendorItemKeywords[4] = RE::TESForm::LookupByID<RE::BGSKeyword>(0x6BBE9);
     vendorItemKeywords[5] = RE::TESForm::LookupByID<RE::BGSKeyword>(0xF5CB0);
-    assert(std::ranges::all_of(FormLists::vendorItemKeywords, [](const auto& keyword) { return keyword != nullptr; }) && "Failed to load all vendor item keywords");
+    assert(
+        std::ranges::all_of(FormLists::vendorItemKeywords, [](const auto& keyword) { return keyword != nullptr; }) &&
+        "Failed to load all vendor item keywords");
 }
 
 bool FormLists::IsByKW(const RE::TESBoundObject* a_item, std::unordered_set<FormID>& a_cache, const int a_kw_index) {
@@ -163,7 +165,7 @@ bool FormLists::IsByKW(const RE::TESBoundObject* a_item, std::unordered_set<Form
     if (a_cache.contains(formid)) {
         return true;
     }
-    if (a_item->HasKeywordInArray({ vendorItemKeywords[a_kw_index] }, false)) {
+    if (a_item->HasKeywordInArray({vendorItemKeywords[a_kw_index]}, false)) {
         a_cache.insert(formid);
         return true;
     }
@@ -184,10 +186,10 @@ bool FormLists::IsClothing(RE::TESBoundObject* a_item) {
     return false;
 }
 
-bool FormLists::IsArmorStrict(RE::TESBoundObject* a_item) { 
+bool FormLists::IsArmorStrict(RE::TESBoundObject* a_item) {
     if (a_item->IsArmor() && !IsClothing(a_item) && !IsShield(a_item) && !IsJewelry(a_item)) {
         return true;
-    } 
+    }
     return false;
 }
 

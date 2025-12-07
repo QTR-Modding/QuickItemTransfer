@@ -2,7 +2,6 @@
 #include <unordered_set>
 
 namespace FormLists {
-
     // Gem, Ore/Ingot, Animal Hide, Raw Food, Jewelry, Recipe
     inline std::array<RE::BGSKeyword*, 6> vendorItemKeywords = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 
@@ -79,73 +78,78 @@ enum ItemTypes {
 };
 
 inline bool IsItemType(const ItemTypes a_itemtype) {
-	return a_itemtype < kNone;
+    return a_itemtype < kNone;
 }
 
 inline std::function<bool(RE::TESBoundObject*)> GetFilterFunc(const ItemTypes a_itemtype) {
-	switch (a_itemtype) {
-	case kWeapon:
-		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Weapon); };
-	case kAmmo:
-		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Ammo); };
-	case kArmorStrict:
-		return [](RE::TESBoundObject* a_obj) { return FormLists::IsArmorStrict(a_obj); };
-	case kJewelry:
-		return [](const RE::TESBoundObject* a_obj) { return FormLists::IsJewelry(a_obj); };
-    case kShield:
-        return [](RE::TESBoundObject* a_obj) { return FormLists::IsShield(a_obj); };
-	case kClothing:
-        return [](RE::TESBoundObject* a_obj) { return FormLists::IsClothing(a_obj); };
-    case kPoison:
-        return [](RE::TESBoundObject* a_obj) {
-            const auto temp = a_obj->As<RE::AlchemyItem>();
-            return temp && !temp->IsFood() && temp->IsPoison();
-        };
-	case kPotion:
-		return [](RE::TESBoundObject* a_obj) {
-			const auto temp = a_obj->As<RE::AlchemyItem>();
-			return temp && !temp->IsFood() && !temp->IsPoison();
-		};
-	case kScrollItem:
-		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Scroll); };
-	case kFood:
-		return [](const RE::TESBoundObject* a_obj) { const auto alch_item = a_obj->As<RE::AlchemyItem>(); return alch_item && alch_item->IsFood(); };
-	case kRawFood:
-		return [](const RE::TESBoundObject* a_obj) { return FormLists::IsRawFood(a_obj); };
-	case kCookedFood:
-		return [](const RE::TESBoundObject* a_obj) { return FormLists::IsCookedFood(a_obj->GetFormID()); };
-	case kSweets:
-		return [](const RE::TESBoundObject* a_obj) { return FormLists::IsSweets(a_obj->GetFormID()); };
-	case kDrinks:
-		return [](const RE::TESBoundObject* a_obj) { return FormLists::IsDrinks(a_obj->GetFormID()); };
-	case kIngredient:
-		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Ingredient); };
-	case kBookAll:
-		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Book); };
-	case kBookSkill:
-        return [](RE::TESBoundObject* a_obj) { return FormLists::IsBookSkill(a_obj); };
-    case kBookSpell:
-	    return [](RE::TESBoundObject* a_obj) { return FormLists::IsBookSpell(a_obj); };
-	case kBookRecipe:
-        return [](RE::TESBoundObject* a_obj) { return FormLists::IsRecipe(a_obj); };
-    case kBookStrict:
-	    return [](RE::TESBoundObject* a_obj) { return FormLists::IsBookStrict(a_obj); };
-	case kKey:
-		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::KeyMaster); };
-	case kMiscAll:
-        return [](const RE::TESBoundObject* a_obj) {return a_obj->Is(RE::FormType::Misc) || a_obj->IsSoulGem() || a_obj->Is(RE::FormType::Light); };
-	case kSoulGem:
-		return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::SoulGem); };
-	case kOres:
-		return [](const RE::TESBoundObject* a_obj) { return FormLists::IsIngotsOres(a_obj); };
-	case kGems:
-		return [](const RE::TESBoundObject* a_obj) { return FormLists::IsGems(a_obj); };
-	case kLeatherNPelts:
-		return [](const RE::TESBoundObject* a_obj) { return FormLists::IsLeatherNPelts(a_obj); };
-	case kBuildingMaterials:
-		return [](const RE::TESBoundObject* a_obj) { return FormLists::IsBuildingMaterials(a_obj->GetFormID()); };
-	default:
-        logger::error("GetFilterFunc: Unknown item type {}", static_cast<int>(a_itemtype));
-		return [](RE::TESBoundObject*) { return false; };
-	}
+    switch (a_itemtype) {
+        case kWeapon:
+            return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Weapon); };
+        case kAmmo:
+            return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Ammo); };
+        case kArmorStrict:
+            return [](RE::TESBoundObject* a_obj) { return FormLists::IsArmorStrict(a_obj); };
+        case kJewelry:
+            return [](const RE::TESBoundObject* a_obj) { return FormLists::IsJewelry(a_obj); };
+        case kShield:
+            return [](RE::TESBoundObject* a_obj) { return FormLists::IsShield(a_obj); };
+        case kClothing:
+            return [](RE::TESBoundObject* a_obj) { return FormLists::IsClothing(a_obj); };
+        case kPoison:
+            return [](RE::TESBoundObject* a_obj) {
+                const auto temp = a_obj->As<RE::AlchemyItem>();
+                return temp && !temp->IsFood() && temp->IsPoison();
+            };
+        case kPotion:
+            return [](RE::TESBoundObject* a_obj) {
+                const auto temp = a_obj->As<RE::AlchemyItem>();
+                return temp && !temp->IsFood() && !temp->IsPoison();
+            };
+        case kScrollItem:
+            return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Scroll); };
+        case kFood:
+            return [](const RE::TESBoundObject* a_obj) {
+                const auto alch_item = a_obj->As<RE::AlchemyItem>();
+                return alch_item && alch_item->IsFood();
+            };
+        case kRawFood:
+            return [](const RE::TESBoundObject* a_obj) { return FormLists::IsRawFood(a_obj); };
+        case kCookedFood:
+            return [](const RE::TESBoundObject* a_obj) { return FormLists::IsCookedFood(a_obj->GetFormID()); };
+        case kSweets:
+            return [](const RE::TESBoundObject* a_obj) { return FormLists::IsSweets(a_obj->GetFormID()); };
+        case kDrinks:
+            return [](const RE::TESBoundObject* a_obj) { return FormLists::IsDrinks(a_obj->GetFormID()); };
+        case kIngredient:
+            return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Ingredient); };
+        case kBookAll:
+            return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::Book); };
+        case kBookSkill:
+            return [](RE::TESBoundObject* a_obj) { return FormLists::IsBookSkill(a_obj); };
+        case kBookSpell:
+            return [](RE::TESBoundObject* a_obj) { return FormLists::IsBookSpell(a_obj); };
+        case kBookRecipe:
+            return [](RE::TESBoundObject* a_obj) { return FormLists::IsRecipe(a_obj); };
+        case kBookStrict:
+            return [](RE::TESBoundObject* a_obj) { return FormLists::IsBookStrict(a_obj); };
+        case kKey:
+            return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::KeyMaster); };
+        case kMiscAll:
+            return [](const RE::TESBoundObject* a_obj) {
+                return a_obj->Is(RE::FormType::Misc) || a_obj->IsSoulGem() || a_obj->Is(RE::FormType::Light);
+            };
+        case kSoulGem:
+            return [](const RE::TESBoundObject* a_obj) { return a_obj->Is(RE::FormType::SoulGem); };
+        case kOres:
+            return [](const RE::TESBoundObject* a_obj) { return FormLists::IsIngotsOres(a_obj); };
+        case kGems:
+            return [](const RE::TESBoundObject* a_obj) { return FormLists::IsGems(a_obj); };
+        case kLeatherNPelts:
+            return [](const RE::TESBoundObject* a_obj) { return FormLists::IsLeatherNPelts(a_obj); };
+        case kBuildingMaterials:
+            return [](const RE::TESBoundObject* a_obj) { return FormLists::IsBuildingMaterials(a_obj->GetFormID()); };
+        default:
+            logger::error("GetFilterFunc: Unknown item type {}", static_cast<int>(a_itemtype));
+            return [](RE::TESBoundObject*) { return false; };
+    }
 }
