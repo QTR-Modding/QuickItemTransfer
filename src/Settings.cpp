@@ -1,32 +1,26 @@
 #include "Settings.h"
 #include "CLibUtilsQTR/FormReader.hpp"
-#include <future>
-#include <fstream>
-#include <filesystem>
-#include <mutex>
+#include <thread>
+#include <atomic>
+#include <cassert>
 
 namespace {
-    // Base folder for all TXT configuration files
     constexpr auto TXT_BASE_FOLDER = "Data/SKSE/Plugins/QuickItemTransfer";
     
-    // Mutex for thread-safe loading
-    // Note: Each thread builds a local set, so mutex is only used during final merge
-    // This minimizes contention and preserves most of the parallel loading benefit
     std::mutex g_loadingMutex;
     
-    // Helper function to trim whitespace from both ends of a string
-    inline std::string trim(const std::string& str) {
-        auto start = std::find_if(str.begin(), str.end(), [](unsigned char ch) {
+    std::string trim(const std::string& str) {
+        const auto start = std::ranges::find_if(str, [](const unsigned char ch) {
             return !std::isspace(ch);
         });
-        auto end = std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) {
+        const auto end = std::find_if(str.rbegin(), str.rend(), [](const unsigned char ch) {
             return !std::isspace(ch);
         }).base();
         return (start < end) ? std::string(start, end) : std::string();
     }
     
     // Helper function to load FormIDs from a TXT file into a set
-    void LoadFormIDsFromFile(const std::filesystem::path& filepath, std::set<FormID>& target_set) {
+    void LoadFormIDsFromFile(const std::filesystem::path& filepath, std::unordered_set<FormID>& target_set) {
         if (!std::filesystem::exists(filepath)) {
             logger::warn("TXT file not found: {}", filepath.string());
             return;
@@ -38,8 +32,6 @@ namespace {
             return;
         }
         
-        // Local set to collect FormIDs (for thread safety)
-        // Each thread builds its own local set independently (no contention)
         std::set<FormID> local_set;
         std::string line;
         int line_number = 0;
@@ -47,16 +39,12 @@ namespace {
         while (std::getline(file, line)) {
             line_number++;
             
-            // Trim whitespace
             line = trim(line);
             
-            // Skip empty lines and comments
             if (line.empty() || line[0] == '#' || line[0] == ';') {
                 continue;
             }
-            
-            // Parse the FormID using CLibUtilsQTR helper
-            // Returns 0 on failure (invalid FormID)
+
             const auto form_id = FormReader::GetFormEditorIDFromString(line);
             if (form_id != 0) {
                 local_set.insert(form_id);
@@ -65,12 +53,8 @@ namespace {
             }
         }
         
-        // File closes automatically when ifstream goes out of scope
-        
-        // Merge local set into target set with mutex protection
-        // This is the only point where contention can occur, but it's very brief
         if (!local_set.empty()) {
-            std::lock_guard<std::mutex> lock(g_loadingMutex);
+            std::lock_guard lock(g_loadingMutex);
             target_set.insert(local_set.begin(), local_set.end());
             logger::info("Loaded {} forms from {}", local_set.size(), filepath.string());
         }
@@ -79,59 +63,130 @@ namespace {
 
 void FormLists::GetAllFormLists() {
     logger::info("Loading form lists from TXT files in {}", TXT_BASE_FOLDER);
-    
-    // Create the base directory if it doesn't exist
+
     std::filesystem::create_directories(TXT_BASE_FOLDER);
-    
-    // Define the file mappings (category folder -> filename -> target set pointer)
-    // Each category now has its own dedicated folder
-    struct FileSetMapping {
+
+    struct CategoryMapping {
         std::string category_folder;
-        std::string filename;
-        std::set<FormID>* target_set;
+        std::unordered_set<FormID>* target_set;
     };
-    
-    std::vector<FileSetMapping> mappings = {
-        {"raw_food", "raw_food.txt", &all_raw_food},
-        {"cooked_food", "cooked_food.txt", &all_cooked_food},
-        {"sweets", "sweets.txt", &all_sweets},
-        {"drinks", "drinks.txt", &all_drinks},
-        {"ores", "ores.txt", &all_ores},
-        {"gems", "gems.txt", &all_gems},
-        {"leather_and_pelts", "leather_and_pelts.txt", &all_leather_n_pelts},
-        {"building_materials", "building_materials.txt", &all_building_materials}
+
+    std::vector<CategoryMapping> mappings = {{"raw_food", &all_raw_food},
+                                             {"cooked_food", &all_cooked_food},
+                                             {"sweets", &all_sweets},
+                                             {"drinks", &all_drinks},
+                                             {"building_materials", &all_building_materials}};
+
+    // ---- collect all tasks first ----
+    struct LoadTask {
+        std::filesystem::path filepath;
+        std::unordered_set<FormID>* target_set;
     };
-    
-    // Load files in parallel using std::async
-    std::vector<std::future<void>> futures;
-    futures.reserve(mappings.size());
-    
-    for (const auto& mapping : mappings) {
-        // Use std::filesystem::path for cross-platform path handling
-        // Structure: Data/SKSE/Plugins/QuickItemTransfer/<category>/<filename>
-        std::filesystem::path filepath = std::filesystem::path(TXT_BASE_FOLDER) / mapping.category_folder / mapping.filename;
-        std::set<FormID>* target_ptr = mapping.target_set;
-        
-        // Launch async task for each file
-        // Capture by value to avoid dangling references
-        futures.emplace_back(std::async(std::launch::async, [filepath, target_ptr]() {
-            LoadFormIDsFromFile(filepath, *target_ptr);
-        }));
+
+    std::vector<LoadTask> tasks;
+
+    for (const auto& [category_folder, target_set] : mappings) {
+        std::filesystem::path dirpath = std::filesystem::path(TXT_BASE_FOLDER) / category_folder;
+
+        if (!std::filesystem::exists(dirpath)) {
+            logger::warn("Category folder not found: {}", dirpath.string());
+            continue;
+        }
+
+        for (const auto& entry : std::filesystem::directory_iterator(dirpath)) {
+            if (!entry.is_regular_file()) {
+                continue;
+            }
+
+            const auto& path = entry.path();
+            if (!path.has_extension() || path.extension() != ".txt") {
+                continue;
+            }
+
+            tasks.push_back(LoadTask{path, target_set});
+        }
     }
-    
-    // Wait for all tasks to complete
-    for (auto& future : futures) {
-        future.get();
+
+    if (tasks.empty()) {
+        logger::info("No TXT files found for any category.");
+        return;
     }
-    
-    logger::info("Form list loading complete. Loaded {} raw food, {} cooked food, {} sweets, {} drinks, {} ores, {} gems, {} leather/pelts, {} building materials",
-        all_raw_food.size(), all_cooked_food.size(), all_sweets.size(), all_drinks.size(),
-        all_ores.size(), all_gems.size(), all_leather_n_pelts.size(), all_building_materials.size());
+
+    constexpr std::size_t MAX_WORKERS = 8;
+
+    const unsigned hw = std::thread::hardware_concurrency();
+    std::size_t worker_count = hw ? static_cast<std::size_t>(hw) : 2;
+    worker_count = std::min<std::size_t>(worker_count, MAX_WORKERS);
+    worker_count = std::min<std::size_t>(worker_count, tasks.size());
+
+    std::atomic<std::size_t> nextIndex{0};
+    std::vector<std::thread> workers;
+    workers.reserve(worker_count);
+
+    for (std::size_t i = 0; i < worker_count; ++i) {
+        workers.emplace_back([&]() {
+            for (;;) {
+                const std::size_t index = nextIndex.fetch_add(1, std::memory_order_relaxed);
+                if (index >= tasks.size()) {
+                    break;
+                }
+
+                auto& [filepath, target_set] = tasks[index];
+                LoadFormIDsFromFile(filepath, *target_set);
+            }
+        });
+    }
+
+    for (auto& t : workers) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+
+    for (const auto& [category_folder, target_set] : mappings) {
+        logger::info("Total loaded for category '{}': {}", category_folder, target_set->size());
+    }
 }
 
-// Legacy GetFormList function removed - now using TXT-based loading
-void FormLists::GetFormList(const RE::FormID a_localid, std::set<FormID>& a_formset) {
-    // This function is no longer used but kept for API compatibility
-    // All form loading now happens through TXT files
-    logger::warn("GetFormList called with local ID {:x} but ESP-based loading is deprecated", a_localid);
+void FormLists::LoadKeywords() {
+    vendorItemKeywords[0] = RE::TESForm::LookupByID<RE::BGSKeyword>(0x914ed);
+    vendorItemKeywords[1] = RE::TESForm::LookupByID<RE::BGSKeyword>(0x914ec);
+    vendorItemKeywords[2] = RE::TESForm::LookupByID<RE::BGSKeyword>(0x914ea);
+    vendorItemKeywords[3] = RE::TESForm::LookupByID<RE::BGSKeyword>(0xA0E56);
+    vendorItemKeywords[4] = RE::TESForm::LookupByID<RE::BGSKeyword>(0x6BBE9);
+    assert(std::ranges::all_of(FormLists::vendorItemKeywords, [](const auto& keyword) { return keyword != nullptr; }) && "Failed to load all vendor item keywords");
 }
+
+bool FormLists::IsByKW(const RE::TESBoundObject* a_item, std::unordered_set<FormID>& a_cache, const int a_kw_index) {
+    const auto formid = a_item->GetFormID();
+    if (a_cache.contains(formid)) {
+        return true;
+    }
+    if (a_item->HasKeywordInArray({ vendorItemKeywords[a_kw_index] }, false)) {
+        a_cache.insert(formid);
+        return true;
+    }
+    return false;
+}
+
+bool FormLists::IsShield(RE::TESBoundObject* a_item) {
+    if (const auto asd = a_item->As<RE::BGSBipedObjectForm>()) {
+        return asd->IsShield();
+    }
+    return false;
+}
+
+bool FormLists::IsClothing(RE::TESBoundObject* a_item) {
+    if (const auto asd = a_item->As<RE::BGSBipedObjectForm>()) {
+        return asd->IsClothing();
+    }
+    return false;
+}
+
+bool FormLists::IsArmorStrict(RE::TESBoundObject* a_item) { 
+    if (a_item->IsArmor() && !IsClothing(a_item) && !IsShield(a_item) && !IsJewelry(a_item)) {
+        return true;
+    } 
+    return false;
+}
+
