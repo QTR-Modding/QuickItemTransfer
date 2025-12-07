@@ -15,8 +15,8 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 cmake_minimum_required(VERSION 3.21)
 # Set your project name. This will be the name of your SKSE .dll file.
 set(AUTHOR_NAME "Quantumyilmaz")
-set(PRODUCT_NAME "QuickerItemTransfer")
-project(${PRODUCT_NAME} VERSION 1.0.1.0 LANGUAGES CXX)
+set(PRODUCT_NAME "QuickItemTransfer")
+project(${PRODUCT_NAME} VERSION 1.0.6.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
@@ -37,7 +37,6 @@ add_custom_command(
 
 # Add a custom target to ensure the resource file is generated
 add_custom_target(Resource ALL DEPENDS ${RESOURCE_OUTPUT})
-include(FetchContent)
 
 set(ENABLE_SKYRIM_SE ON CACHE BOOL " " FORCE)
 set(ENABLE_SKYRIM_AE ON CACHE BOOL " " FORCE)
@@ -49,20 +48,6 @@ get_target_property(COMMONLIB_SRC_DIR CommonLibSSE SOURCE_DIR)
 
 find_path(CLIB_UTIL_INCLUDE_DIRS "ClibUtil/utils.hpp")
 find_path(ClibUtilsQTR_INCLUDE_DIRS "ClibUtilsQTR/utils.hpp")
-
-#YAML-CPP
-FetchContent_Declare(
-  yaml-cpp
-  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-  GIT_TAG master # Can be a tag (yaml-cpp-x.x.x), a commit hash, or a branch name (master)
-)
-FetchContent_GetProperties(yaml-cpp)
-if(NOT yaml-cpp_POPULATED)
-  message(STATUS "Fetching yaml-cpp...")
-  FetchContent_Populate(yaml-cpp)
-  add_subdirectory(${yaml-cpp_SOURCE_DIR} ${yaml-cpp_BINARY_DIR})
-endif()
-
 
 file(
   GLOB_RECURSE
@@ -94,7 +79,6 @@ target_include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC yaml-cpp::yaml-cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE IS_HOST_PLUGIN)
 
 set(wildlander_output false)
