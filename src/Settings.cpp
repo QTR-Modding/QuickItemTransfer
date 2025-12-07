@@ -14,6 +14,17 @@ namespace {
     // This minimizes contention and preserves most of the parallel loading benefit
     std::mutex g_loadingMutex;
     
+    // Helper function to trim whitespace from both ends of a string
+    inline std::string trim(const std::string& str) {
+        auto start = std::find_if(str.begin(), str.end(), [](unsigned char ch) {
+            return !std::isspace(ch);
+        });
+        auto end = std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) {
+            return !std::isspace(ch);
+        }).base();
+        return (start < end) ? std::string(start, end) : std::string();
+    }
+    
     // Helper function to load FormIDs from a TXT file into a set
     void LoadFormIDsFromFile(const std::string& filepath, std::set<FormID>& target_set) {
         if (!std::filesystem::exists(filepath)) {
@@ -37,12 +48,7 @@ namespace {
             line_number++;
             
             // Trim whitespace
-            line.erase(line.begin(), std::find_if(line.begin(), line.end(), [](unsigned char ch) {
-                return !std::isspace(ch);
-            }));
-            line.erase(std::find_if(line.rbegin(), line.rend(), [](unsigned char ch) {
-                return !std::isspace(ch);
-            }).base(), line.end());
+            line = trim(line);
             
             // Skip empty lines and comments
             if (line.empty() || line[0] == '#' || line[0] == ';') {
@@ -50,7 +56,9 @@ namespace {
             }
             
             // Parse the FormID using CLibUtilsQTR helper
-            if (const auto form_id = FormReader::GetFormEditorIDFromString(line); form_id > 0) {
+            // Returns 0 on failure (invalid FormID)
+            const auto form_id = FormReader::GetFormEditorIDFromString(line);
+            if (form_id != 0) {
                 local_set.insert(form_id);
             } else {
                 logger::warn("Invalid FormID at line {} in file {}: {}", line_number, filepath, line);
