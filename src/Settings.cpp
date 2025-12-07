@@ -10,6 +10,8 @@ namespace {
     constexpr auto TXT_BASE_FOLDER = "Data/SKSE/Plugins/QuickItemTransfer";
     
     // Mutex for thread-safe loading
+    // Note: Each thread builds a local set, so mutex is only used during final merge
+    // This minimizes contention and preserves most of the parallel loading benefit
     std::mutex g_loadingMutex;
     
     // Helper function to load FormIDs from a TXT file into a set
@@ -26,6 +28,7 @@ namespace {
         }
         
         // Local set to collect FormIDs (for thread safety)
+        // Each thread builds its own local set independently (no contention)
         std::set<FormID> local_set;
         std::string line;
         int line_number = 0;
@@ -57,6 +60,7 @@ namespace {
         file.close();
         
         // Merge local set into target set with mutex protection
+        // This is the only point where contention can occur, but it's very brief
         if (!local_set.empty()) {
             std::lock_guard<std::mutex> lock(g_loadingMutex);
             target_set.insert(local_set.begin(), local_set.end());
@@ -71,22 +75,22 @@ void FormLists::GetAllFormLists() {
     // Create the base directory if it doesn't exist
     std::filesystem::create_directories(TXT_BASE_FOLDER);
     
-    // Define the file mappings (filename -> target set)
-    // Each set gets its own TXT file
+    // Define the file mappings (filename -> target set pointer)
+    // Using pointers to avoid reference lifetime issues with async
     struct FileSetMapping {
         std::string filename;
-        std::set<FormID>& target_set;
+        std::set<FormID>* target_set;
     };
     
     std::vector<FileSetMapping> mappings = {
-        {"raw_food.txt", all_raw_food},
-        {"cooked_food.txt", all_cooked_food},
-        {"sweets.txt", all_sweets},
-        {"drinks.txt", all_drinks},
-        {"ores.txt", all_ores},
-        {"gems.txt", all_gems},
-        {"leather_and_pelts.txt", all_leather_n_pelts},
-        {"building_materials.txt", all_building_materials}
+        {"raw_food.txt", &all_raw_food},
+        {"cooked_food.txt", &all_cooked_food},
+        {"sweets.txt", &all_sweets},
+        {"drinks.txt", &all_drinks},
+        {"ores.txt", &all_ores},
+        {"gems.txt", &all_gems},
+        {"leather_and_pelts.txt", &all_leather_n_pelts},
+        {"building_materials.txt", &all_building_materials}
     };
     
     // Load files in parallel using std::async
@@ -95,10 +99,12 @@ void FormLists::GetAllFormLists() {
     
     for (const auto& mapping : mappings) {
         const std::string filepath = std::string(TXT_BASE_FOLDER) + "/" + mapping.filename;
+        std::set<FormID>* target_ptr = mapping.target_set;
         
         // Launch async task for each file
-        futures.emplace_back(std::async(std::launch::async, [filepath, &target_set = mapping.target_set]() {
-            LoadFormIDsFromFile(filepath, target_set);
+        // Capture by value to avoid dangling references
+        futures.emplace_back(std::async(std::launch::async, [filepath, target_ptr]() {
+            LoadFormIDsFromFile(filepath, *target_ptr);
         }));
     }
     
