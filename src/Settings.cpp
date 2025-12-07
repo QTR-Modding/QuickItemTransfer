@@ -26,15 +26,15 @@ namespace {
     }
     
     // Helper function to load FormIDs from a TXT file into a set
-    void LoadFormIDsFromFile(const std::string& filepath, std::set<FormID>& target_set) {
+    void LoadFormIDsFromFile(const std::filesystem::path& filepath, std::set<FormID>& target_set) {
         if (!std::filesystem::exists(filepath)) {
-            logger::warn("TXT file not found: {}", filepath);
+            logger::warn("TXT file not found: {}", filepath.string());
             return;
         }
         
         std::ifstream file(filepath);
         if (!file.is_open()) {
-            logger::error("Failed to open TXT file: {}", filepath);
+            logger::error("Failed to open TXT file: {}", filepath.string());
             return;
         }
         
@@ -61,18 +61,18 @@ namespace {
             if (form_id != 0) {
                 local_set.insert(form_id);
             } else {
-                logger::warn("Invalid FormID at line {} in file {}: {}", line_number, filepath, line);
+                logger::warn("Invalid FormID at line {} in file {}: {}", line_number, filepath.string(), line);
             }
         }
         
-        file.close();
+        // File closes automatically when ifstream goes out of scope
         
         // Merge local set into target set with mutex protection
         // This is the only point where contention can occur, but it's very brief
         if (!local_set.empty()) {
             std::lock_guard<std::mutex> lock(g_loadingMutex);
             target_set.insert(local_set.begin(), local_set.end());
-            logger::info("Loaded {} forms from {}", local_set.size(), filepath);
+            logger::info("Loaded {} forms from {}", local_set.size(), filepath.string());
         }
     }
 }
@@ -106,7 +106,8 @@ void FormLists::GetAllFormLists() {
     futures.reserve(mappings.size());
     
     for (const auto& mapping : mappings) {
-        const std::string filepath = std::string(TXT_BASE_FOLDER) + "/" + mapping.filename;
+        // Use std::filesystem::path for cross-platform path handling
+        std::filesystem::path filepath = std::filesystem::path(TXT_BASE_FOLDER) / mapping.filename;
         std::set<FormID>* target_ptr = mapping.target_set;
         
         // Launch async task for each file
