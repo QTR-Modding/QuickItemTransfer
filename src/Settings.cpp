@@ -154,6 +154,7 @@ void FormLists::LoadKeywords() {
     vendorItemKeywords[2] = RE::TESForm::LookupByID<RE::BGSKeyword>(0x914ea);
     vendorItemKeywords[3] = RE::TESForm::LookupByID<RE::BGSKeyword>(0xA0E56);
     vendorItemKeywords[4] = RE::TESForm::LookupByID<RE::BGSKeyword>(0x6BBE9);
+    vendorItemKeywords[5] = RE::TESForm::LookupByID<RE::BGSKeyword>(0xF5CB0);
     assert(std::ranges::all_of(FormLists::vendorItemKeywords, [](const auto& keyword) { return keyword != nullptr; }) && "Failed to load all vendor item keywords");
 }
 
@@ -190,3 +191,17 @@ bool FormLists::IsArmorStrict(RE::TESBoundObject* a_item) {
     return false;
 }
 
+bool FormLists::IsBookSkill(RE::TESBoundObject* a_item) {
+    const auto book = a_item->As<RE::TESObjectBOOK>();
+    return book ? book->TeachesSkill() : false;
+}
+
+bool FormLists::IsBookSpell(RE::TESBoundObject* a_item) {
+    const auto book = a_item->As<RE::TESObjectBOOK>();
+    return book ? book->TeachesSpell() : false;
+}
+
+bool FormLists::IsBookStrict(RE::TESBoundObject* a_item) {
+    const auto book = a_item->As<RE::TESObjectBOOK>();
+    return book ? !IsBookSkill(a_item) && !IsBookSpell(a_item) && !IsRecipe(a_item) : false;
+}

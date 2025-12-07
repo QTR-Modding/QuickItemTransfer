@@ -102,7 +102,13 @@ void Utils::StartTransfer(RE::StaticFunctionTag*, const int iAction, const int i
         type = kIngredient;
     }
     else if (iAction == 7 || iAction == 18) {
-        type = kBook;
+        switch (iSubType) {
+            case 1:type = kBookStrict;break;
+            case 2:type = kBookSpell;break;
+            case 3:type = kBookSkill;break;
+            case 4:type = kBookRecipe;break;
+            default:type = kBookAll;break;
+        }
     }
     else if (iAction == 8 || iAction == 19) {
         type = kKey;
