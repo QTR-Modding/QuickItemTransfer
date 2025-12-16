@@ -30,6 +30,16 @@ void Utils::TransferItemsOfType(RE::TESObjectREFR* akSource, RE::TESObjectREFR* 
         }
     }
 
+    RE::FormID source_outfitID = 0;
+
+    if (const auto a_actor = akSource->As<RE::Actor>(); a_actor && !a_actor->IsPlayerRef()) {
+        if (const auto source_npc = a_actor->GetActorBase()) {
+            if (const auto source_outfit = source_npc->defaultOutfit) {
+                source_outfitID = source_outfit->GetFormID();
+            }
+        }
+    }
+
     const bool bExcludeSpecials = akSource->IsPlayerRef();
     const auto filter_func = GetFilterFunc(item_type);
     const auto exclude_weight_limit = Settings::exclude_weightless_global->value;
@@ -41,11 +51,28 @@ void Utils::TransferItemsOfType(RE::TESObjectREFR* akSource, RE::TESObjectREFR* 
         if (item->Is(RE::FormType::LeveledItem) || !item->GetPlayable()) {
             continue;
         }
+
         auto count = data.first;
+
+        if (source_outfitID > 0) {
+            if (const auto xLists = data.second->extraLists) {
+                RE::TESObjectREFR::Count outfit_count = 0;
+                for (const auto& xList : *xLists) {
+                    if (!xList) continue;
+                    if (const auto xOutfit = xList->GetByType<RE::ExtraOutfitItem>()) {
+                        if (source_outfitID == xOutfit->id) {
+                            ++outfit_count;
+                        }
+                    }
+                }
+                count -= outfit_count;
+            }
+        }
+
         if (count <= 0) {
             continue;
         }
-        if (item->GetWeight() <= exclude_weight_limit) {
+        if (exclude_weight_limit > 0.f && item->GetWeight() < exclude_weight_limit) {
             continue;
         }
         if (auto a_formid = item->GetFormID(); FormLists::excluded_forms.contains(a_formid)) {
