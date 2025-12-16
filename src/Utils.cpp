@@ -30,28 +30,73 @@ void Utils::TransferItemsOfType(RE::TESObjectREFR* akSource, RE::TESObjectREFR* 
         }
     }
 
+    RE::FormID source_outfitID = 0;
+
+    if (const auto a_actor = akSource->As<RE::Actor>(); a_actor && !a_actor->IsPlayerRef()) {
+        if (const auto source_npc = a_actor->GetActorBase()) {
+            if (const auto source_outfit = source_npc->defaultOutfit) {
+                source_outfitID = source_outfit->GetFormID();
+            }
+        }
+    }
+
     const bool bExcludeSpecials = akSource->IsPlayerRef();
     const auto filter_func = GetFilterFunc(item_type);
+    const auto exclude_weight_limit = Settings::exclude_weightless_global->value;
     std::vector<std::pair<RE::TESBoundObject*, std::int32_t>> forms;
 
     for (const auto akSource_inv = akSource->GetInventory();
          auto& [item,data] : akSource_inv) {
+        if (remaining_capacity <= 0.0f) break;
         if (item->Is(RE::FormType::LeveledItem) || !item->GetPlayable()) {
             continue;
         }
-        if (data.first <= 0) continue;
+
+        auto count = data.first;
+
+        if (source_outfitID > 0) {
+            if (const auto xLists = data.second->extraLists) {
+                RE::TESObjectREFR::Count outfit_count = 0;
+                for (const auto& xList : *xLists) {
+                    if (!xList) continue;
+                    if (const auto xOutfit = xList->GetByType<RE::ExtraOutfitItem>()) {
+                        if (source_outfitID == xOutfit->id) {
+                            ++outfit_count;
+                        }
+                    }
+                }
+                count -= outfit_count;
+            }
+        }
+
+        if (count <= 0) {
+            continue;
+        }
+        if (exclude_weight_limit > 0.f && item->GetWeight() < exclude_weight_limit) {
+            continue;
+        }
+        if (auto a_formid = item->GetFormID(); FormLists::excluded_forms.contains(a_formid)) {
+            continue;
+        }
         if (!filter_func(item)) {
             continue;
         }
-        if (bExcludeSpecials && (data.second->IsWorn() || data.second->IsFavorited() || data.second->IsQuestObject()))
+        if (bExcludeSpecials && (data.second->IsWorn() || data.second->IsFavorited() || data.second->IsQuestObject())) {
             continue;
-        forms.emplace_back(item, data.first);
+        }
+
+        const auto item_weight = item->GetWeight();
+        remaining_capacity -= item_weight * count;
+        if (remaining_capacity < 0.0f) {
+            count = static_cast<std::int32_t>(std::floor((remaining_capacity + item_weight * count) / item_weight));
+            if (count <= 0) break;
+        }
+        
+        forms.emplace_back(item, count);
     }
 
     for (const auto& [item, count] : forms) {
-        if (remaining_capacity <= 0.0f) break;
         akSource->RemoveItem(item, count, RE::ITEM_REMOVE_REASON::kRemove, nullptr, akTarget);
-        remaining_capacity -= item->GetWeight() * count;
     }
 
     SKSE::GetTaskInterface()->AddUITask([akTarget, akSource]() {

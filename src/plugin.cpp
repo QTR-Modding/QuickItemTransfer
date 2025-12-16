@@ -6,6 +6,7 @@ namespace {
         if (a_message->type == SKSE::MessagingInterface::kDataLoaded) {
             FormLists::GetAllFormLists();
             FormLists::LoadKeywords();
+            Settings::LoadSettings();
             SKSE::GetPapyrusInterface()->Register(Utils::PapyrusFunctions);
         }
     }

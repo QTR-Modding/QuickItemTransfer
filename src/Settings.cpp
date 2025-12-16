@@ -75,7 +75,9 @@ void FormLists::GetAllFormLists() {
                                              {"cooked_food", &all_cooked_food},
                                              {"sweets", &all_sweets},
                                              {"drinks", &all_drinks},
-                                             {"building_materials", &all_building_materials}};
+                                             {"building_materials", &all_building_materials},
+                                             {"excludes", &excluded_forms}
+    };
 
     // ---- collect all tasks first ----
     struct LoadTask {
@@ -206,4 +208,8 @@ bool FormLists::IsBookSpell(RE::TESBoundObject* a_item) {
 bool FormLists::IsBookStrict(RE::TESBoundObject* a_item) {
     const auto book = a_item->As<RE::TESObjectBOOK>();
     return book ? !IsBookSkill(a_item) && !IsBookSpell(a_item) && !IsRecipe(a_item) : false;
+}
+
+void Settings::LoadSettings() {
+    exclude_weightless_global = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(exclude_weightless_localID, esp_name);
 }

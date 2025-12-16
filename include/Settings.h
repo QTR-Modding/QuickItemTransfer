@@ -1,6 +1,14 @@
 #pragma once
 #include <unordered_set>
 
+namespace Settings {
+    constexpr std::string_view esp_name = "Quick Item Transfer.esp";
+    constexpr RE::FormID exclude_weightless_localID = 0x802;
+    inline RE::TESGlobal* exclude_weightless_global = nullptr;
+    void LoadSettings();
+}
+
+
 namespace FormLists {
     // Gem, Ore/Ingot, Animal Hide, Raw Food, Jewelry, Recipe
     inline std::array<RE::BGSKeyword*, 6> vendorItemKeywords = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
@@ -17,6 +25,8 @@ namespace FormLists {
     inline std::unordered_set<FormID> all_leather_n_pelts;
     inline std::unordered_set<FormID> all_jewelry;
     inline std::unordered_set<FormID> all_recipes;
+
+    inline std::unordered_set<FormID> excluded_forms;
 
     // Main entry point: loads all form lists from TXT files (multithreaded)
     void GetAllFormLists();
