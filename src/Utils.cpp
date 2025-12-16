@@ -32,32 +32,43 @@ void Utils::TransferItemsOfType(RE::TESObjectREFR* akSource, RE::TESObjectREFR* 
 
     const bool bExcludeSpecials = akSource->IsPlayerRef();
     const auto filter_func = GetFilterFunc(item_type);
+    const auto exclude_weight_limit = Settings::exclude_weightless_global->value;
     std::vector<std::pair<RE::TESBoundObject*, std::int32_t>> forms;
 
     for (const auto akSource_inv = akSource->GetInventory();
          auto& [item,data] : akSource_inv) {
+        if (remaining_capacity <= 0.0f) break;
         if (item->Is(RE::FormType::LeveledItem) || !item->GetPlayable()) {
             continue;
         }
-        if (data.first <= 0) continue;
+        auto count = data.first;
+        if (count <= 0) {
+            continue;
+        }
+        if (item->GetWeight() <= exclude_weight_limit) {
+            continue;
+        }
+        if (auto a_formid = item->GetFormID(); FormLists::excluded_forms.contains(a_formid)) {
+            continue;
+        }
         if (!filter_func(item)) {
             continue;
         }
-        if (bExcludeSpecials && (data.second->IsWorn() || data.second->IsFavorited() || data.second->IsQuestObject()))
+        if (bExcludeSpecials && (data.second->IsWorn() || data.second->IsFavorited() || data.second->IsQuestObject())) {
             continue;
-        forms.emplace_back(item, data.first);
-    }
+        }
 
-    for (const auto& [item, count] : forms) {
-        if (remaining_capacity <= 0.0f) break;
         const auto item_weight = item->GetWeight();
         remaining_capacity -= item_weight * count;
         if (remaining_capacity < 0.0f) {
-            const auto allowed_count = static_cast<std::int32_t>(std::floor((remaining_capacity + item_weight * count) / item_weight));
-            if (allowed_count <= 0) break;
-            akSource->RemoveItem(item, allowed_count, RE::ITEM_REMOVE_REASON::kRemove, nullptr, akTarget);
-            break;
+            count = static_cast<std::int32_t>(std::floor((remaining_capacity + item_weight * count) / item_weight));
+            if (count <= 0) break;
         }
+        
+        forms.emplace_back(item, count);
+    }
+
+    for (const auto& [item, count] : forms) {
         akSource->RemoveItem(item, count, RE::ITEM_REMOVE_REASON::kRemove, nullptr, akTarget);
     }
 
