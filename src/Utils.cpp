@@ -50,8 +50,15 @@ void Utils::TransferItemsOfType(RE::TESObjectREFR* akSource, RE::TESObjectREFR* 
 
     for (const auto& [item, count] : forms) {
         if (remaining_capacity <= 0.0f) break;
+        const auto item_weight = item->GetWeight();
+        remaining_capacity -= item_weight * count;
+        if (remaining_capacity < 0.0f) {
+            const auto allowed_count = static_cast<std::int32_t>(std::floor((remaining_capacity + item_weight * count) / item_weight));
+            if (allowed_count <= 0) break;
+            akSource->RemoveItem(item, allowed_count, RE::ITEM_REMOVE_REASON::kRemove, nullptr, akTarget);
+            break;
+        }
         akSource->RemoveItem(item, count, RE::ITEM_REMOVE_REASON::kRemove, nullptr, akTarget);
-        remaining_capacity -= item->GetWeight() * count;
     }
 
     SKSE::GetTaskInterface()->AddUITask([akTarget, akSource]() {
