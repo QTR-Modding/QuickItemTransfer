@@ -1,14 +1,9 @@
-Initialize the pinned CommonLibVR-MIT dependency before building:
-
-```sh
-git submodule update --init --recursive
-```
-
 #### WINDOWS ENVIRONMENT VARIABLES TO SET
 
 1. **`VCPKG_ROOT`**: The path to your clone of [vcpkg](https://github.com/microsoft/vcpkg).
-2. (optional) **`SKYRIM_FOLDER`**: path of your Skyrim Special Edition folder.
-3. (optional) **`SKYRIM_MODS_FOLDER`**: path of the folder where your mods are.
+2. **`COMMONLIB_SSE_FOLDER`**: The path to your local [CommonlibSE-MIT](https://github.com/Quantumyilmaz/CommonlibSE-MIT) checkout on `main`.
+3. (optional) **`SKYRIM_FOLDER`**: path of your Skyrim Special Edition folder.
+4. (optional) **`SKYRIM_MODS_FOLDER`**: path of the folder where your mods are.
 
 #### THINGS TO EDIT
 
